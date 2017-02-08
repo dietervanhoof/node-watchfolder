@@ -5,7 +5,7 @@ module.exports = {
     error,
     info,
     success,
-    warning,
+    warn
 };
 
 function debug(message) {
@@ -26,6 +26,6 @@ function success(message) {
     console.log(chalk.green(message));
 }
 
-function warning(message) {
+function warn(message) {
     console.log(chalk.yellow(message));
 }

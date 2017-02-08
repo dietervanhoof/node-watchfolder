@@ -7,6 +7,7 @@ var required_arguments = [
     "SIDECAR_FILE_TYPE",
     "RABBIT_MQ_HOST",
     "RABBIT_MQ_PORT",
+    "RABBIT_MQ_VHOST",
     "RABBIT_MQ_SUCCESS_EXCHANGE",
     "RABBIT_MQ_SUCCESS_QUEUE",
     "RABBIT_MQ_ERROR_EXCHANGE",
@@ -21,6 +22,7 @@ var required_arguments = [
     "CHECK_PACKAGE_AMOUNT",
     "PROCESSING_FOLDER_NAME",
     "INCOMPLETE_FOLDER_NAME",
+    "REFUSED_FOLDER_NAME"
 ];
 
 var parseArguments = () => {

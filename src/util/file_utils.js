@@ -1,4 +1,5 @@
-let mv = require("mv");
+const mv = require("mv");
+const path = require("path");
 
 (() => {
     function calcMD5 (file) {
@@ -14,12 +15,17 @@ let mv = require("mv");
         return hash.digest ('hex');
     };
 
+    function generatePath(file_path, folder) {
+        return (path.dirname(file_path) + '/' + folder + '/' + path.basename(file_path));
+    }
+
     function moveFile(sourcePath, destinationPath, cb) {
         mv(sourcePath, destinationPath, {mkdirp: true}, cb);
     }
 
     module.exports = {
         calcMD5: calcMD5,
-        moveFile: moveFile
+        moveFile: moveFile,
+        generatePath: generatePath
     };
 }) ();

@@ -6,6 +6,7 @@ nodemon src/watchfolder.js \
 	--COLLATERAL_FILE_TYPE=.srt \
 	--RABBIT_MQ_HOST=localhost \
 	--RABBIT_MQ_PORT=5672 \
+	--RABBIT_MQ_VHOST=/ \
 	--RABBIT_MQ_SUCCESS_EXCHANGE=borndigital.input \
 	--RABBIT_MQ_SUCCESS_QUEUE=borndigital.input \
 	--RABBIT_MQ_ERROR_EXCHANGE=born.digital.errors \
@@ -20,4 +21,5 @@ nodemon src/watchfolder.js \
 	--CHECK_PACKAGE_AMOUNT=3 \
 	--PROCESSING_FOLDER_NAME=processing \
 	--INCOMPLETE_FOLDER_NAME=incomplete \
+	--REFUSED_FOLDER_NAME=refused \
 	/Users/dieter/watch_this_folder
