@@ -4,9 +4,11 @@ const FileIndex = require("./util/fileindex");
 const FileRecognizer = require("./util/file_recognizer");
 const options = require("./util/cmdargs").parseArguments();
 const Publisher = require("./amqp/publisher");
+const Generator = require("./util/message_generator");
 
-let fileindex = new FileIndex(options, new FileRecognizer(options));
+const generator = new Generator(options);
 const publisher = new Publisher(options);
+let fileindex = new FileIndex(options, new FileRecognizer(options), publisher, generator);
 
 publisher.initialize().then(startWatching);
 
@@ -16,6 +18,6 @@ function startWatching() {
         // Ignore sub-folders
         return RegExp(options.folder + '.+/').test(path)
     }}).on('add', (event, path) => {
-        fileindex.add_file(event, fileindex.determine_file_type(event, options), options, publisher);
+        fileindex.add_file(event, fileindex.determine_file_type(event, options), options, publisher, generator);
     });
 };

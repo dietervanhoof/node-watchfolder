@@ -34,7 +34,7 @@ Publisher.prototype.initializeSocket = function() {
             if (err) reject(err);
             fulfill(handle);
         });
-    })
+    });
 };
 
 Publisher.prototype.keepHandle = function(handle) {
@@ -101,7 +101,39 @@ Publisher.prototype.bindQueue = function() {
 };
 
 Publisher.prototype.publishMessage = function(msg) {
-    log.success('Gunna publish!');
+    return new Promise((fulfill, reject) => {
+        this.initiatePublish()
+            .then( () => { this.publishData(msg) })
+            .catch(reject)
+        fulfill();
+    });
+};
+
+Publisher.prototype.initiatePublish = function() {
+    return new Promise((fulfill, reject) => {
+        this.handle.basic.publish(1, this.config.RABBIT_MQ_SUCCESS_EXCHANGE, '', false, false, (publisherror) => {
+            if (publisherror) reject(publisherror);
+            fulfill(this.handle);
+        });
+    });
+};
+
+
+Publisher.prototype.publishData = function(msg) {
+    return new Promise((fulfill, reject) => {
+        return new Promise((fulfill, reject) => {
+            this.handle.content(1, 'basic', {
+                'content-type' : 'application/json'
+            }, msg, function(contentError){
+                if(contentError){
+                    reject(contentError);
+                }
+                else {
+                    fulfill();
+                }
+            });
+        });
+    });
 };
 
 module.exports = Publisher;

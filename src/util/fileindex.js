@@ -3,10 +3,11 @@ const fileutils = require("./file_utils");
 const Promise = require("bluebird");
 const log = require("../services/logger.service");
 
-function FileIndex (config, filerecognizer, publisher) {
+function FileIndex (config, filerecognizer, publisher, generator) {
     this.config = config;
     this.file_recognizer = filerecognizer;
     this.publisher = publisher;
+    this.generator = generator;
     this.packages = {};
     setInterval(this.check_expired_packages.bind(this), config.CHECK_PACKAGE_INTERVAL);
 };
@@ -28,6 +29,8 @@ FileIndex.prototype.determine_file_type = function(filepath) {
 
 FileIndex.prototype.add_file = function (filepath, file_type) {
     const filename = path.basename(filepath);
+    const currentTime = new Date();
+    const currentTimeMillis = currentTime.getTime();
     if (file_type !== 'other') {
         log.info('Accepted file for package handling: ' + filename);
         let lookupKey = filename.replace(/\.[^/.]+$/, "");
@@ -35,7 +38,10 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
             this.packages[lookupKey].files.push(
                 {
                     file_type: file_type,
-                    file_path: filepath
+                    file_path: fileutils.getFolder(filepath),
+                    file_name: fileutils.getFileName(filepath),
+                    timestamp: currentTime
+
                 });
         } else {
             log.info('This is a new package. Create one.');
@@ -43,17 +49,19 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
                 files: [
                     {
                         file_type: file_type,
-                        file_path: filepath
+                        file_path: fileutils.getFolder(filepath),
+                        file_name: fileutils.getFileName(filepath),
+                        timestamp: currentTime
                     }
                 ]
             }
         }
-        this.packages[lookupKey].lastModificationDate = new Date().getTime();
+        this.packages[lookupKey].lastModificationDate = currentTimeMillis;
         if (this.is_package_complete(lookupKey)) {
             // Avoid discarding once complete
             this.packages[lookupKey].isComplete = true;
             log.success('PACKAGE ' + lookupKey + ' IS COMPLETE!');
-            //acceptPackage(key);
+            this.acceptPackage(lookupKey, this);
         }
     } else {
         log.info('Refused file for package handling: ' + filename);
@@ -89,45 +97,48 @@ FileIndex.prototype.check_expired_packages = function() {
     }
 };
 
+/** Package is incomplete **/
+FileIndex.prototype.discardPackage = function(key) {
+    log.info('Discarding package with key: ' + key);
+    this.movePackage(key, this.config.INCOMPLETE_FOLDER_NAME)
+        .then( () => { this.sendIncompleteMessage(key) })
+        .then( () => { this.deleteEntry(key) })
+        .catch(error => {
+            log.error(error);
+        });
+};
+
+/** Package is complete **/
+FileIndex.prototype.acceptPackage = function(key) {
+    log.info('Package with key: ' + key + ' is complete.');
+    this.movePackage(key, this.config.PROCESSING_FOLDER_NAME)
+        .then( () => { this.sendCompleteMessage(key) })
+        .then( () => { this.deleteEntry(key) })
+        .catch(error => {
+            log.error(error);
+        });
+
+};
+
 FileIndex.prototype.refuseFile = function (path) {
-    fileutils.moveFile(path, fileutils.generatePath(path, this.config.REFUSED_FOLDER_NAME), (err) => {
+    fileutils.moveFile(path, fileutils.createFullPath(fileutils.appendFolder(
+        fileutils.getFolder(path), this.config.REFUSED_FOLDER_NAME), fileutils.getFileName(path)), (err) => {
         if (err) {
             reject(err);
         }
     });
 };
 
-/** Package is incomplete **/
-FileIndex.prototype.discardPackage = function(key) {
-    log.info('Discarding package with key: ' + key);
-    this.moveIncompletePackage(key)
-        .then( () => { this.deleteEntry(key) })
-        .then( () => { this.sendIncompleteMessage(key) })
-        .catch(error => {
-            log.error(error);
-        });
-};
-/** Package is complete **/
-FileIndex.prototype.acceptPackage = function(key) {
-    log.info('Accepting package with key: ' + key);
-    this.moveIncompletePackage(key)
-        .then( () => { this.sendIncompleteMessage(key) })
-        .then( () => { this.deleteEntry(key) })
-        .catch(error => {
-            log.info(error);
-        });
-};
-
-FileIndex.prototype.moveIncompletePackage = function(key) {
+FileIndex.prototype.movePackage = function(key, folder) {
     return new Promise((fulfill, reject) => {
-        log.info(this.packages);
         this.packages[key].files.forEach((file) => {
-            log.info('Trying to move file: ' + file);
-            fileutils.moveFile(file.file_path, fileutils.generatePath(file.file_path, this.config.INCOMPLETE_FOLDER_NAME), (err) => {
-                if (err) {
-                    reject(err);
-                }
-            });
+            fileutils.moveFile(fileutils.createFullPath(file.file_path, file.file_name),
+                fileutils.createFullPath(fileutils.appendFolder(
+                    file.file_path, folder), file.file_name), (err) => {
+                    if (err) {
+                        reject(err);
+                    }
+                });
         });
         fulfill();
     });
@@ -136,7 +147,7 @@ FileIndex.prototype.moveIncompletePackage = function(key) {
 FileIndex.prototype.deleteEntry = function(key) {
     return new Promise((fulfill, reject) => {
         try {
-            log.info('Deleting entry: ' + this.key);
+            log.info('Deleting entry: ' + key);
             delete this.packages[key];
         } catch (error) {
             reject(error);
@@ -145,10 +156,23 @@ FileIndex.prototype.deleteEntry = function(key) {
     });
 };
 
-FileIndex.prototype.sendIncompleteMessage = function() {
+FileIndex.prototype.sendIncompleteMessage = function(key) {
     return new Promise((fulfill, reject) => {
         log.info('Publishing message on the incomplete queue.');
         fulfill();
+    });
+};
+
+FileIndex.prototype.sendCompleteMessage = function(key) {
+    return new Promise((fulfill, reject) => {
+        this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME))
+            .then( () => {
+                log.success('Successfully published message');
+                fulfill();
+            })
+            .catch((err) => {
+                reject(err);
+            });
     });
 };
 
