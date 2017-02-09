@@ -31,8 +31,11 @@ Publisher.prototype.initialize = function () {
 Publisher.prototype.initializeSocket = function() {
     return new Promise((fulfill, reject) => {
         bramqp.initialize(this.socket, 'rabbitmq/full/amqp0-9-1.stripped.extended', (err, handle) => {
-            if (err) reject(err);
-            fulfill(handle);
+            if (err) {
+                reject(err)
+            } else {
+                fulfill(handle);
+            }
         });
     });
 };
@@ -46,19 +49,23 @@ Publisher.prototype.keepHandle = function(handle) {
 
 Publisher.prototype.openConnection = function() {
     return new Promise((fulfill, reject) => {
-        try {
-            this.handle.openAMQPCommunication(this.config.RABBIT_MQ_USER, this.config.RABBIT_MQ_PASSWORD, true, this.config.RABBIT_MQ_VHOST, fulfill);
-        }
-        catch (error) {
-            reject(error);
-        }
+        this.handle.openAMQPCommunication(this.config.RABBIT_MQ_USER, this.config.RABBIT_MQ_PASSWORD, true, this.config.RABBIT_MQ_VHOST);
+        this.handle.once('1:channel.open-ok', function (channel, method, data) {
+            log.success('Successfully connected to RabbitMQ');
+            fulfill();
+        });
+        this.handle.once('connection.close', function (channel, method, data) {
+            reject(data['reply-text'] + '(' + data['reply-code'] + ')');
+        });
     });
 };
 
 Publisher.prototype.declareExchange = function() {
     return new Promise((fulfill, reject) => {
         try {
-            this.handle.exchange.declare(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, this.config.RABBIT_MQ_TOPIC_TYPE);
+            this.handle.exchange.declare(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, this.config.RABBIT_MQ_TOPIC_TYPE, (error) => {
+                if (error) reject(error);
+            });
             this.handle.once('1:exchange.declare-ok', function (channel, method, data) {
                 log.success('\t-> Exchange successfully declared');
                 fulfill(this.handle);
@@ -73,7 +80,9 @@ Publisher.prototype.declareExchange = function() {
 Publisher.prototype.declareQueue = function() {
     return new Promise((fulfill, reject) => {
         try {
-            this.handle.queue.declare(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, false, true, false, false, false);
+            this.handle.queue.declare(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, false, true, false, false, false, (error) => {
+                if (error) reject(error);
+            });
             this.handle.once('1:queue.declare-ok', function (channel, method, data) {
                 log.success('\t-> Queue successfully declared');
                 fulfill(this.handle);
@@ -88,7 +97,9 @@ Publisher.prototype.declareQueue = function() {
 Publisher.prototype.bindQueue = function() {
     return new Promise((fulfill, reject) => {
         try {
-            this.handle.queue.bind(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, this.config.RABBIT_MQ_SUCCESS_EXCHANGE, '', false);
+            this.handle.queue.bind(1, this.config.RABBIT_MQ_SUCCESS_QUEUE, this.config.RABBIT_MQ_SUCCESS_EXCHANGE, '', false, (error) => {
+                if (error) reject(error);
+            });
             this.handle.once('1:queue.bind-ok', function (channel, method, data) {
                 log.success('\t-> Queue successfully bound to Exchange');
                 fulfill(this.handle);
@@ -96,6 +107,17 @@ Publisher.prototype.bindQueue = function() {
         }
         catch (error) {
             reject(error);
+        }
+    });
+};
+
+Publisher.prototype.handleErrors = function() {
+    return new Promise((fulfill, reject) => {
+        if (this.errorCode) {
+            reject('The '+ this.type + ' was forcefully closed with error: ' + this.errorMessage + '(' + this.errorCode + ')');
+        }
+        else {
+            fulfill();
         }
     });
 };

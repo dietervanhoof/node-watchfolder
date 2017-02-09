@@ -13,15 +13,23 @@ let fileindex = new FileIndex(options, new FileRecognizer(options), publisher, g
 
 const fileCopyDelaySeconds = 3;
 
-publisher.initialize().then(startWatching);
+publisher.initialize()
+    .then(startWatching)
+    .catch( (err) => {
+        log.error(err);
+        process.exit(1);
+    });
 
 function startWatching() {
-    log.success('Watching folder: ' + options.folder);
-    chokidar.watch(options.folder, {ignored: (path) => {
-        // Ignore sub-folders
-        return RegExp(options.folder + '.+/').test(path)
-    }}).on('add', (event, path) => {
-        tryWatchFile(event);
+    return new Promise((fulfill, reject) => {
+        log.success('Watching folder: ' + options.folder);
+        chokidar.watch(options.folder, {ignored: (path) => {
+            // Ignore sub-folders
+            return RegExp(options.folder + '.+/').test(path)
+        }}).on('add', (event, path) => {
+            tryWatchFile(event);
+        });
+        fulfill();
     });
 };
 
