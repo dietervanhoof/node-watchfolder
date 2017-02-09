@@ -16,7 +16,7 @@ A complete package might be:
 ## How to use
 This service can be started with the command line, passing all arguments:
 ```
-nodemon src/watchfolder.js \
+node src/watchfolder.js \
 	--CP=VRT \
 	--FLOW_ID=VRT.VIDEO.1 \
 	--ESSENCE_FILE_TYPE=.mxf,.txt \
