@@ -1,4 +1,4 @@
-nodemon src/watchfolder.js \
+node src/watchfolder.js \
 	--CP=VRT \
 	--FLOW_ID=VRT.VIDEO.1 \
 	--ESSENCE_FILE_TYPE=.mxf,.txt \
