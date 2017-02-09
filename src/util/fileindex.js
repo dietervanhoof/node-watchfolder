@@ -60,7 +60,6 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
         if (this.is_package_complete(lookupKey)) {
             // Avoid discarding once complete
             this.packages[lookupKey].isComplete = true;
-            log.success('PACKAGE ' + lookupKey + ' IS COMPLETE!');
             this.acceptPackage(lookupKey, this);
         }
     } else {

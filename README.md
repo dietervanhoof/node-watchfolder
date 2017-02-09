@@ -43,3 +43,8 @@ node src/watchfolder.js \
 	/Users/dieter/watch_this_folder
 
 ```
+
+The following arguments are optional:
+``COLLATERAL_FILE_TYPE``
+
+All other arguments are mandatory.
