@@ -126,8 +126,8 @@ Publisher.prototype.publishMessage = function(msg) {
     return new Promise((fulfill, reject) => {
         this.initiatePublish()
             .then( () => { this.publishData(msg) })
-            .catch(reject)
-        fulfill();
+            .then(fulfill)
+            .catch(reject);
     });
 };
 

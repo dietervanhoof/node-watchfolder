@@ -1,4 +1,6 @@
 const chalk = require('chalk');
+const util = require("util");
+require( "console-stamp" )( console, { pattern : "dd/mm/yyyy HH:MM:ss.l" } );
 
 module.exports = {
     debug,
@@ -15,11 +17,11 @@ function debug(message) {
 }
 
 function error(message) {
-    console.log(chalk.red(message));
+    console.error(chalk.red(message));
 }
 
 function info(message) {
-    console.log(message);
+    console.info(message);
 }
 
 function success(message) {
@@ -27,5 +29,5 @@ function success(message) {
 }
 
 function warn(message) {
-    console.log(chalk.yellow(message));
+    console.warn(chalk.yellow(message));
 }
