@@ -9,7 +9,7 @@ function Publisher(config) {
     return this;
 };
 
-Publisher.prototype.publishMessage = function(msg) {
+Publisher.prototype.publishMessage = function(msg, id) {
     let conn =  amqp.connect(util.format('amqp://%s:%s@%s:%d/%s',
         this.config.RABBIT_MQ_USER,
         this.config.RABBIT_MQ_PASSWORD,
@@ -29,17 +29,14 @@ Publisher.prototype.publishMessage = function(msg) {
                 return this.bindQueue(ch, this.config)
             })
             .then( (ch) => {
-                return this.transmitMessage(ch, msg, this.config)
+                return this.transmitMessage(ch, msg, id, this.config)
             })
             .then( (ch) => {
                 return this.closeChannel(ch, this.config)
             })
             .finally(function() {
-
                 try {
-                    log.warn('About to close connection');
                     conn.close();
-                    log.warn('Closed connection');
                 } catch (err) {
                     log.error(err);
                 }
@@ -52,7 +49,6 @@ Publisher.prototype.createChannel = (conn) => {
     return new Promise((resolve, reject) => {
         conn.createChannel()
             .then((ch) => {
-                log.success('Created channel');
                 resolve(ch);
             })
             .catch((err) => {
@@ -65,7 +61,6 @@ Publisher.prototype.ensureExchange = (ch, config) => {
     return new Promise((resolve, reject) => {
         ch.assertExchange(config.RABBIT_MQ_SUCCESS_QUEUE, config.RABBIT_MQ_TOPIC_TYPE, { durable: true })
             .then(() => {
-                log.success('Created exchange');
                 resolve(ch);
             })
             .catch((err) => {
@@ -78,7 +73,6 @@ Publisher.prototype.ensureQueue = (ch, config) => {
     return new Promise((resolve, reject) => {
         ch.assertQueue(config.RABBIT_MQ_SUCCESS_QUEUE, { durable: true })
             .then(() => {
-                log.success('Created queue');
                 resolve(ch);
             })
             .catch((err) => {
@@ -91,7 +85,6 @@ Publisher.prototype.bindQueue = (ch, config) => {
     return new Promise((resolve, reject) => {
         ch.bindQueue(config.RABBIT_MQ_SUCCESS_QUEUE, config.RABBIT_MQ_SUCCESS_QUEUE, '')
             .then(() => {
-                log.success('Bound queue');
                 resolve(ch);
             })
             .catch((err) => {
@@ -100,9 +93,10 @@ Publisher.prototype.bindQueue = (ch, config) => {
     });
 };
 
-Publisher.prototype.transmitMessage = (ch, msg, config) => {
+Publisher.prototype.transmitMessage = (ch, msg, id, config) => {
     return new Promise((resolve, reject) => {
         try {
+            log.success('Successfully published message for package ' + id);
             ch.publish(config.RABBIT_MQ_SUCCESS_QUEUE, '', new Buffer(msg), { persistent: true });
             resolve(ch);
         }

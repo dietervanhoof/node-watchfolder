@@ -33,9 +33,9 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
     const currentTime = new Date();
     const currentTimeMillis = currentTime.getTime();
     if (file_type !== 'other') {
-        log.info('Accepted file for package handling: ' + filename);
         const lookupKey = filename.replace(/\.[^/.]+$/, "");
         if (this.packages[lookupKey]) {
+            log.info('Accepted file for existing package: ' + filename);
             this.packages[lookupKey].files.push(
                 {
                     file_type: file_type,
@@ -45,7 +45,7 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
 
                 });
         } else {
-            log.info('This is a new package. Create one.');
+            log.info('Accepted file for new package: ' + filename);
             this.packages[lookupKey] = {
                 files: [
                     {
@@ -171,7 +171,7 @@ FileIndex.prototype.deleteEntry = function(key) {
 };
 
 FileIndex.prototype.sendCompleteMessage = function(key) {
-        this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME));
+    return this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME), key);
 };
 
 module.exports = FileIndex;
