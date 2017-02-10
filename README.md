@@ -44,7 +44,8 @@ node src/watchfolder.js \
 
 ```
 
-The following arguments are optional:
-``COLLATERAL_FILE_TYPE``
+The following argument is optional:
+``COLLATERAL_FILE_TYPE``.
+This can be left empty or not passed altogether.
 
 All other arguments are mandatory.

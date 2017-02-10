@@ -10,10 +10,11 @@ function FileIndex (config, filerecognizer, publisher, generator) {
     this.generator = generator;
     this.packages = {};
     setInterval(this.check_expired_packages.bind(this), config.CHECK_PACKAGE_INTERVAL);
+    setInterval(this.retry_failed_packages.bind(this), 15000);
 };
 
 FileIndex.prototype.determine_file_type = function(filepath) {
-    let filename = path.basename(filepath);
+    const filename = path.basename(filepath);
     if (this.file_recognizer.is_essence(filename)) {
         return "essence";
     } else if (this.file_recognizer.is_sidecar(filename)){
@@ -33,7 +34,7 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
     const currentTimeMillis = currentTime.getTime();
     if (file_type !== 'other') {
         log.info('Accepted file for package handling: ' + filename);
-        let lookupKey = filename.replace(/\.[^/.]+$/, "");
+        const lookupKey = filename.replace(/\.[^/.]+$/, "");
         if (this.packages[lookupKey]) {
             this.packages[lookupKey].files.push(
                 {
@@ -87,11 +88,26 @@ FileIndex.prototype.is_package_complete = function(key) {
 };
 
 FileIndex.prototype.check_expired_packages = function() {
-    let currentTime = new Date().getTime();
+    const currentTime = new Date().getTime();
     for (var key in this.packages) {
         if (!this.packages[key].isComplete && this.packages[key].lastModificationDate + (this.config.CHECK_PACKAGE_INTERVAL * this.config.CHECK_PACKAGE_AMOUNT) < currentTime) {
             log.warn('Package ' + key + ' is too old. Deleting this entry and making it as incomplete.');
             this.discardPackage(key);
+        }
+    }
+};
+
+FileIndex.prototype.retry_failed_packages = function() {
+    const currentTime = new Date().getTime();
+    for (var key in this.packages) {
+        if (this.packages[key].isComplete && this.packages[key].failed) {
+            log.warn('Package ' + key + ' failed. Trying to publish message again.');
+            this.sendCompleteMessage(key)
+                .then( () => { return this.deleteEntry(key) })
+                .catch(error => {
+                    this.packages[key].failed = true;
+                    log.error(error + ' - Keeping package in memory');
+                });
         }
     }
 };
@@ -111,10 +127,11 @@ FileIndex.prototype.discardPackage = function(key) {
 FileIndex.prototype.acceptPackage = function(key) {
     log.info('Package with key: ' + key + ' is complete.');
     this.movePackage(key, this.config.PROCESSING_FOLDER_NAME)
-        .then( () => { this.sendCompleteMessage(key) })
-        .then( () => { this.deleteEntry(key) })
+        .then( () => { return this.sendCompleteMessage(key) })
+        .then( () => { return this.deleteEntry(key) })
         .catch(error => {
-            log.error(error);
+            this.packages[key].failed = true;
+            log.error(error + ' - Keeping package in memory');
         });
 
 };
@@ -163,16 +180,7 @@ FileIndex.prototype.sendIncompleteMessage = function(key) {
 };
 
 FileIndex.prototype.sendCompleteMessage = function(key) {
-    return new Promise((fulfill, reject) => {
-        this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME))
-            .then( () => {
-                log.success('Successfully published message');
-                fulfill();
-            })
-            .catch((err) => {
-                reject(err);
-            });
-    });
+        return this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME));
 };
 
 module.exports = FileIndex;
