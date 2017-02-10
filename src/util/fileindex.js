@@ -132,7 +132,6 @@ FileIndex.prototype.acceptPackage = function(key) {
             this.packages[key].failed = true;
             log.error(error + ' - Keeping package in memory');
         });
-
 };
 
 FileIndex.prototype.refuseFile = function (path) {
@@ -172,11 +171,7 @@ FileIndex.prototype.deleteEntry = function(key) {
 };
 
 FileIndex.prototype.sendCompleteMessage = function(key) {
-        return this.publisher.initialize()
-            .then( () => {
-                return this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME))
-            })
-            .then( () => { return this.publisher.closeConnection() });
+        this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME));
 };
 
 module.exports = FileIndex;
