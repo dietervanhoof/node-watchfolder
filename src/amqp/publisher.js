@@ -55,9 +55,6 @@ Publisher.prototype.attachEventListeners = function () {
         this.socket.on('error', (data) => {
             console.log('error', data);
         });
-        this.socket.on('timeout', (data) => {
-            console.log('timeout', data);
-        });
         resolve(this.socket);
     });
 };
@@ -116,6 +113,29 @@ Publisher.prototype.openConnection = function() {
             reject(data['reply-text'] + '(' + data['reply-code'] + ')');
         });
     });
+};
+
+Publisher.prototype.closeConnection = function() {
+    return new Promise((resolve, reject) => {
+        log.info('Disconnecting from RabbitMQ...');
+        return this.detachEventListeners(this.socket, this.handle)
+            .bind(this)
+            .then( () => {
+                this.handle.closeAMQPCommunication( (err) => {
+                    if (err) {
+                        throw err;
+                    }
+                })
+            });
+    });
+};
+
+Publisher.prototype.detachEventListeners = (socket, handle) => {
+    return new Promise((resolve, reject) => {
+        socket.removeAllListeners();
+        handle.removeAllListeners();
+        resolve();
+    })
 };
 
 Publisher.prototype.declareExchange = function() {

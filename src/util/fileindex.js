@@ -116,7 +116,6 @@ FileIndex.prototype.retry_failed_packages = function() {
 FileIndex.prototype.discardPackage = function(key) {
     log.info('Discarding package with key: ' + key);
     this.movePackage(key, this.config.INCOMPLETE_FOLDER_NAME)
-        .then( () => { this.sendIncompleteMessage(key) })
         .then( () => { this.deleteEntry(key) })
         .catch(error => {
             log.error(error);
@@ -165,22 +164,19 @@ FileIndex.prototype.deleteEntry = function(key) {
         try {
             log.info('Deleting entry: ' + key);
             delete this.packages[key];
+            fulfill();
         } catch (error) {
             reject(error);
         }
-        fulfill();
-    });
-};
-
-FileIndex.prototype.sendIncompleteMessage = function(key) {
-    return new Promise((fulfill, reject) => {
-        log.info('Publishing message on the incomplete queue.');
-        fulfill();
     });
 };
 
 FileIndex.prototype.sendCompleteMessage = function(key) {
-        return this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME));
+        return this.publisher.initialize()
+            .then( () => {
+                return this.publisher.publishMessage(this.generator.generate(this.packages[key], this.config.PROCESSING_FOLDER_NAME))
+            })
+            .then( () => { return this.publisher.closeConnection() });
 };
 
 module.exports = FileIndex;

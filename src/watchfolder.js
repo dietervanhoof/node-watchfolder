@@ -13,8 +13,7 @@ let fileindex = new FileIndex(options, new FileRecognizer(options), publisher, g
 
 const fileCopyDelaySeconds = 3;
 
-publisher.initialize()
-    .then(startWatching)
+startWatching()
     .catch( (err) => {
         log.error(err);
         process.exit(1);
