@@ -1,6 +1,5 @@
-var argv = require("minimist");
-
-var required_arguments = [
+const util = require("util");
+const required_arguments = [
     "CP",
     "FLOW_ID",
     "ESSENCE_FILE_TYPE",
@@ -25,8 +24,8 @@ var required_arguments = [
     "REFUSED_FOLDER_NAME"
 ];
 
-var parseArguments = () => {
-    var argv = require('minimist')(process.argv.slice(2));
+const parseArguments = () => {
+    const argv = require('minimist')(process.argv.slice(2));
     required_arguments.forEach((argument) => {
         if (!argv[argument]) throw ('Argument ' + argument + ' was missing but is required.');
     });
@@ -34,11 +33,19 @@ var parseArguments = () => {
 
     // Derived arguments
     argv.folder = argv._[0];
-    argv.broker = 'amqp://' + argv.RABBIT_MQ_USER + ':' + argv.RABBIT_MQ_PASSWORD + '@' + argv.RABBIT_MQ_HOST + ':' + argv.RABBIT_MQ_PORT;
+    argv.broker = util.format('amqp://%s:%s@%s:%d/%s',
+        argv.RABBIT_MQ_USER,
+        argv.RABBIT_MQ_PASSWORD,
+        argv.RABBIT_MQ_HOST,
+        argv.RABBIT_MQ_PORT,
+        argv.RABBIT_MQ_VHOST);
     argv.ESSENCE_FILE_TYPE = argv.ESSENCE_FILE_TYPE.split(',');
     argv.SIDECAR_FILE_TYPE = argv.SIDECAR_FILE_TYPE.split(',');
     if (argv.COLLATERAL_FILE_TYPE) {
         argv.COLLATERAL_FILE_TYPE = argv.COLLATERAL_FILE_TYPE.split(',');
+    }
+    if (!argv.RETRY_PACKAGE_INTERVAL) {
+        argv.RETRY_PACKAGE_INTERVAL = 15000
     }
     return argv;
 };

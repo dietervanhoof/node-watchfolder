@@ -10,7 +10,7 @@ function FileIndex (config, filerecognizer, publisher, generator) {
     this.generator = generator;
     this.packages = {};
     setInterval(this.check_expired_packages.bind(this), config.CHECK_PACKAGE_INTERVAL);
-    setInterval(this.retry_failed_packages.bind(this), 15000);
+    setInterval(this.retry_failed_packages.bind(this), config.RETRY_PACKAGE_INTERVAL);
 };
 
 FileIndex.prototype.determine_file_type = function(filepath) {
@@ -89,7 +89,7 @@ FileIndex.prototype.is_package_complete = function(key) {
 
 FileIndex.prototype.check_expired_packages = function() {
     const currentTime = new Date().getTime();
-    for (var key in this.packages) {
+    for (let key in this.packages) {
         if (!this.packages[key].isComplete && this.packages[key].lastModificationDate + (this.config.CHECK_PACKAGE_INTERVAL * this.config.CHECK_PACKAGE_AMOUNT) < currentTime) {
             log.warn('Package ' + key + ' is too old. Deleting this entry and making it as incomplete.');
             this.discardPackage(key);
@@ -99,7 +99,7 @@ FileIndex.prototype.check_expired_packages = function() {
 
 FileIndex.prototype.retry_failed_packages = function() {
     const currentTime = new Date().getTime();
-    for (var key in this.packages) {
+    for (let key in this.packages) {
         if (this.packages[key].isComplete && this.packages[key].failed) {
             log.warn('Package ' + key + ' failed. Trying to publish message again.');
             this.sendCompleteMessage(key)
@@ -144,7 +144,7 @@ FileIndex.prototype.refuseFile = function (path) {
 };
 
 FileIndex.prototype.movePackage = function(key, folder) {
-    return new Promise((fulfill, reject) => {
+    return new Promise((resolve, reject) => {
         this.packages[key].files.forEach((file) => {
             fileutils.moveFile(fileutils.createFullPath(file.file_path, file.file_name),
                 fileutils.createFullPath(fileutils.appendFolder(
@@ -154,16 +154,16 @@ FileIndex.prototype.movePackage = function(key, folder) {
                     }
                 });
         });
-        fulfill();
+        resolve();
     });
 };
 
 FileIndex.prototype.deleteEntry = function(key) {
-    return new Promise((fulfill, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             log.info('Deleting entry: ' + key);
             delete this.packages[key];
-            fulfill();
+            resolve();
         } catch (error) {
             reject(error);
         }

@@ -6,7 +6,7 @@ function MessageGenerator(config) {
 }
 
 MessageGenerator.prototype.generate = function (completedPackage, completion_folder) {
-    var result = {
+    const result = {
         cp_name: this.config.CP,
         flow_id: this.config.FLOW_ID,
         server: this.config.FTP_SERVER,

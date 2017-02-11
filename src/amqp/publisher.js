@@ -1,21 +1,15 @@
 const Promise = require("bluebird");
 const log = require("../services/logger.service");
-const util = require("util");
 const Buffer = require("buffer").Buffer;
 const amqp = require('amqplib');
 
 function Publisher(config) {
     this.config = config;
     return this;
-};
+}
 
 Publisher.prototype.publishMessage = function(msg, id) {
-    let conn =  amqp.connect(util.format('amqp://%s:%s@%s:%d/%s',
-        this.config.RABBIT_MQ_USER,
-        this.config.RABBIT_MQ_PASSWORD,
-        this.config.RABBIT_MQ_HOST,
-        this.config.RABBIT_MQ_PORT,
-        this.config.RABBIT_MQ_VHOST));
+    let conn =  amqp.connect(this.config.broker);
     return conn.then( (conn) => {
         this.createChannel(conn)
             .bind(this)
@@ -117,26 +111,5 @@ Publisher.prototype.closeChannel = (ch) => {
             });
     });
 };
-
-
-
-/**
-amqp.connect('amqp://localhost').then(function(conn) {
-    return conn.createChannel().then(function(ch) {
-
-        var ok = ch.assertExchange(ex, 'fanout', {durable: false})
-
-        var message = process.argv.slice(2).join(' ') ||
-            'info: Hello World!';
-
-        return ok.then(function() {
-            ch.publish(ex, '', new Buffer(message));
-            console.log(" [x] Sent '%s'", message);
-            return ch.close();
-        });
-    }).finally(function() { conn.close(); });
-}).catch(console.warn);
-
- **/
 
 module.exports = Publisher;
