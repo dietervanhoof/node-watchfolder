@@ -1,5 +1,5 @@
 const log = require("../services/logger.service");
-const fileutils = require("./file_utils");
+const fileutils = require("./fileUtils");
 
 function MessageGenerator(config) {
     this.config = config;

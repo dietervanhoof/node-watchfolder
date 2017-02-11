@@ -1,5 +1,5 @@
 const path = require("path");
-const fileutils = require("./file_utils");
+const fileutils = require("./fileUtils");
 const Promise = require("bluebird");
 const log = require("../services/logger.service");
 
@@ -124,7 +124,7 @@ FileIndex.prototype.discardPackage = function(key) {
 
 /** Package is complete **/
 FileIndex.prototype.acceptPackage = function(key) {
-    log.info('Package with key: ' + key + ' is complete.');
+    log.info('Package ' + key + ' is complete.');
     this.movePackage(key, this.config.PROCESSING_FOLDER_NAME)
         .then( () => { return this.sendCompleteMessage(key) })
         .then( () => { return this.deleteEntry(key) })
