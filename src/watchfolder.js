@@ -4,7 +4,7 @@ const FileIndex = require("./util/fileIndex");
 const FileRecognizer = require("./util/fileRecognizer");
 const options = require("./util/cmdargs").parseArguments();
 const Publisher = require("./amqp/publisher");
-const Generator = require("./util/message_generator");
+const Generator = require("./util/messageGenerator");
 const fs = require("fs");
 
 const generator = new Generator(options);

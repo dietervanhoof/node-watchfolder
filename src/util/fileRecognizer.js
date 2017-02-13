@@ -2,6 +2,7 @@ const path = require("path");
 
 function FileRecognizer(config) {
     this.config = config;
+    return this;
 }
 
 FileRecognizer.prototype.is_essence = function(file_name) {

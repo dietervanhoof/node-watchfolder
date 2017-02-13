@@ -2,7 +2,10 @@
   "name": "nodejs-watchfolder",
   "version": "1.0.0",
   "description": "Watches directories for packages and publishes messages when complete.",
-  "main": "src/index.js",
+  "main": "src/watchfolder.js",
+  "directories": {
+    "test": "tests"
+  },
   "scripts": {
     "test": "mocha --compilers js:babel/register",
     "build": "gulp build",
@@ -14,7 +17,8 @@
   "author": "VIAA",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "0.24.1"
+    "eslint": "0.24.1",
+    "mocha": "^3.2.0"
   },
   "dependencies": {
     "amqplib": "^0.5.1",

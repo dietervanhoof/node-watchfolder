@@ -3,6 +3,7 @@ const fileutils = require("./fileUtils");
 
 function MessageGenerator(config) {
     this.config = config;
+    return this;
 }
 
 MessageGenerator.prototype.generate = function (completedPackage, completion_folder) {
