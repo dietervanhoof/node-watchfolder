@@ -11,7 +11,7 @@
     "build": "gulp build",
     "watch": "gulp watch",
     "start-dev": "NODE_ENV=development gulp run",
-    "start": "NODE_ENV=production node build/index.js",
+    "start": "NODE_ENV=production node build/watchfolder.js",
     "lint": "eslint src"
   },
   "author": "VIAA",

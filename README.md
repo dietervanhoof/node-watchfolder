@@ -1,7 +1,7 @@
 # NodeJS watchfolder
 Watches directories for packages and publishes messages when complete.
 
-A package consists of 2 or 3 files, depending on the configuration. This service will monitor a folder for files and match these based on their name.
+A package consists of 2 or 3 files, depending on the configuration. This service will monitor a folder for files and match these based on their name and extension.
 
 ####Example:
 A complete package might be:

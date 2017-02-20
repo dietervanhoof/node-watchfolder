@@ -19,7 +19,7 @@ FileRecognizer.prototype.is_collateral = function (file_name) {
 
 function match_types (extension, file_types) {
     return file_types.some((filetype) => {
-        if (filetype == extension) {
+        if (filetype.toLowerCase() == extension.toLowerCase()) {
             return true;
         } else {
             return false;
