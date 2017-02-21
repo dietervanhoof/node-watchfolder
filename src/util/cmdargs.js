@@ -21,7 +21,8 @@ const required_arguments = [
     "CHECK_PACKAGE_AMOUNT",
     "PROCESSING_FOLDER_NAME",
     "INCOMPLETE_FOLDER_NAME",
-    "REFUSED_FOLDER_NAME"
+    "REFUSED_FOLDER_NAME",
+    "FOLDER_TO_WATCH"
 ];
 
 const parseArguments = () => {
@@ -29,10 +30,9 @@ const parseArguments = () => {
     required_arguments.forEach((argument) => {
         if (!argv[argument]) throw ('Argument ' + argument + ' was missing but is required.');
     });
-    if (argv._ == null ||  argv._.length == null || argv._.length == 0) throw ('No directory was passed as argument.');
 
     // Derived arguments
-    argv.folder = argv._[0];
+    argv.folder = argv.FOLDER_TO_WATCH;
     argv.broker = util.format('amqp://%s:%s@%s:%d/%s',
         argv.RABBIT_MQ_USER,
         argv.RABBIT_MQ_PASSWORD,

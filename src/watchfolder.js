@@ -11,8 +11,6 @@ const generator = new Generator(options);
 const publisher = new Publisher(options);
 const fileindex = new FileIndex(options, new FileRecognizer(options), publisher, generator);
 
-const fileCopyDelaySeconds = 3;
-
 const startWatching = () => {
     return new Promise((resolve, reject) => {
         log.success('Watching folder: ' + options.folder);
