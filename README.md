@@ -41,7 +41,7 @@ node src/watchfolder.js \
 	--PROCESSING_FOLDER_NAME=processing \
 	--INCOMPLETE_FOLDER_NAME=incomplete \
 	--REFUSED_FOLDER_NAME=refused \
-	/Users/dieter/watch_this_folder
+	--FOLDER_TO_WATCH=/Users/dieter/watch_this_folder
 
 ```
 
