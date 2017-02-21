@@ -72,3 +72,4 @@ Argument                        |Description                                    
 | PROCESSING_FOLDER_NAME        |Folder to move completed packages to                                   | True          | None|
 | INCOMPLETE_FOLDER_NAME        |Folder to move incomplete packages to                                  | True          | None|
 | REFUSED_FOLDER_NAME           |Folder to move refused files to                                        | True          | None|
+| FOLDER_TO_WATCH               |Folder to watch for files                                              | True          | None|
