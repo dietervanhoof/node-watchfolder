@@ -17,7 +17,7 @@ FileIndex.prototype.determine_file_type = function(filepath) {
     const filename = path.basename(filepath);
     if (this.file_recognizer.is_essence(filename)) {
         return "essence";
-    } else if (this.file_recognizer.is_sidecar(filename)){
+    } else if (this.config['SIDECAR_FILE_TYPE'] && this.file_recognizer.is_sidecar(filename)){
         return "sidecar";
     }
     if (this.config['COLLATERAL_FILE_TYPE']) {
@@ -29,44 +29,47 @@ FileIndex.prototype.determine_file_type = function(filepath) {
 };
 
 FileIndex.prototype.add_file = function (filepath, file_type) {
-    const filename = path.basename(filepath);
-    const currentTime = new Date();
-    const currentTimeMillis = currentTime.getTime();
-    if (file_type !== 'other') {
-        const lookupKey = filename.replace(/\.[^/.]+$/, "");
-        if (this.packages[lookupKey]) {
-            log.info('Accepted file for existing package: ' + filename);
-            this.packages[lookupKey].files.push(
-                {
-                    file_type: file_type,
-                    file_path: fileutils.getFolder(filepath),
-                    file_name: fileutils.getFileName(filepath),
-                    timestamp: currentTime
-
-                });
-        } else {
-            log.info('Accepted file for new package: ' + filename);
-            this.packages[lookupKey] = {
-                files: [
+    return new Promise((resolve, reject) => {
+        const filename = path.basename(filepath);
+        const currentTime = new Date();
+        const currentTimeMillis = currentTime.getTime();
+        if (file_type !== 'other') {
+            const lookupKey = filename.replace(/\.[^/.]+$/, "");
+            if (this.packages[lookupKey]) {
+                log.info('Accepted file for existing package: ' + filename);
+                this.packages[lookupKey].files.push(
                     {
                         file_type: file_type,
                         file_path: fileutils.getFolder(filepath),
                         file_name: fileutils.getFileName(filepath),
                         timestamp: currentTime
-                    }
-                ]
+
+                    });
+            } else {
+                log.info('Accepted file for new package: ' + filename);
+                this.packages[lookupKey] = {
+                    files: [
+                        {
+                            file_type: file_type,
+                            file_path: fileutils.getFolder(filepath),
+                            file_name: fileutils.getFileName(filepath),
+                            timestamp: currentTime
+                        }
+                    ]
+                }
             }
+            this.packages[lookupKey].lastModificationDate = currentTimeMillis;
+            if (this.is_package_complete(lookupKey)) {
+                // Avoid discarding once complete
+                this.packages[lookupKey].isComplete = true;
+                this.acceptPackage(lookupKey, this);
+            }
+        } else {
+            log.info('Refused file for package handling: ' + filename);
+            this.refuseFile(filepath);
         }
-        this.packages[lookupKey].lastModificationDate = currentTimeMillis;
-        if (this.is_package_complete(lookupKey)) {
-            // Avoid discarding once complete
-            this.packages[lookupKey].isComplete = true;
-            this.acceptPackage(lookupKey, this);
-        }
-    } else {
-        log.info('Refused file for package handling: ' + filename);
-        this.refuseFile(filepath);
-    }
+        resolve();
+    });
 };
 
 FileIndex.prototype.is_package_complete = function(key) {
@@ -81,9 +84,14 @@ FileIndex.prototype.is_package_complete = function(key) {
     });
 
     if (this.config['COLLATERAL_FILE_TYPE']) {
-        return has_essence && has_sidecar && has_collateral
+        return has_essence && has_sidecar && has_collateral;
     } else {
-        return has_essence && has_sidecar
+        if (this.config['SIDECAR_FILE_TYPE']) {
+            return has_essence && has_sidecar;
+        }
+        else {
+            return has_essence;
+        }
     }
 };
 
