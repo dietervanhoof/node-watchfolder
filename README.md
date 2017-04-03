@@ -5,6 +5,8 @@ A package consists of 2 or 3 files, depending on the configuration. This service
 
 ####Example:
 A complete package might be:
+- Configured with only essence
+  - somefile.mxf
 - Configured with only essence and sidecar
   - somefile.mxf
   - somefile.xml
@@ -51,7 +53,7 @@ Argument                        |Description                                    
 | CP                            |Can be filled in freely. Will be part of the message                   | True          | None|
 | FLOW_ID                       |Can be filled in freely. Will be part of the message                   | True          | None|
 | ESSENCE_FILE_TYPE             |File types that are recognized as essence, separated with a `,`        | True          | None|
-| SIDECAR_FILE_TYPE             |File types that are recognized as sidecar, separated with a `,`        | True          | None|
+| SIDECAR_FILE_TYPE             |File types that are recognized as sidecar, separated with a `,`        | False         | None|
 | COLLATERAL_FILE_TYPE          |File types that are recognized as collateral, separated with a `,`     | False         | None|
 | RABBIT_MQ_HOST                |AMQP host to connect to                                                | True          | None|
 | RABBIT_MQ_PORT                |AMQP port to connect to                                                | True          | None|

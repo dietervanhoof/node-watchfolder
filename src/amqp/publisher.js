@@ -1,7 +1,7 @@
 const Promise = require("bluebird");
 const log = require("../services/logger.service");
 const Buffer = require("buffer").Buffer;
-const amqp = require('amqplib');
+const amqp = Promise.promisifyAll(require('amqplib'));
 
 function Publisher(config) {
     this.config = config;
@@ -10,7 +10,7 @@ function Publisher(config) {
 
 Publisher.prototype.publishMessage = function(msg, id) {
     let conn =  amqp.connect(this.config.broker);
-    return conn.then( (conn) => {
+    return conn.then((conn) => {
         this.createChannel(conn)
             .bind(this)
             .then((ch) => {
@@ -34,7 +34,6 @@ Publisher.prototype.publishMessage = function(msg, id) {
                 } catch (err) {
                     log.error(err);
                 }
-
             });
     });
 };
@@ -53,7 +52,7 @@ Publisher.prototype.createChannel = (conn) => {
 
 Publisher.prototype.ensureExchange = (ch, config) => {
     return new Promise((resolve, reject) => {
-        ch.assertExchange(config.RABBIT_MQ_SUCCESS_QUEUE, config.RABBIT_MQ_TOPIC_TYPE, { durable: true })
+        ch.assertExchange(config.RABBIT_MQ_SUCCESS_EXCHANGE, config.RABBIT_MQ_TOPIC_TYPE, { durable: true })
             .then(() => {
                 resolve(ch);
             })
@@ -77,7 +76,7 @@ Publisher.prototype.ensureQueue = (ch, config) => {
 
 Publisher.prototype.bindQueue = (ch, config) => {
     return new Promise((resolve, reject) => {
-        ch.bindQueue(config.RABBIT_MQ_SUCCESS_QUEUE, config.RABBIT_MQ_SUCCESS_QUEUE, '')
+        ch.bindQueue(config.RABBIT_MQ_SUCCESS_QUEUE, config.RABBIT_MQ_SUCCESS_QUEUE, config.FLOW_ID)
             .then(() => {
                 resolve(ch);
             })
@@ -91,7 +90,7 @@ Publisher.prototype.transmitMessage = (ch, msg, id, config) => {
     return new Promise((resolve, reject) => {
         try {
             log.success('Successfully published message for package ' + id);
-            ch.publish(config.RABBIT_MQ_SUCCESS_QUEUE, '', new Buffer(msg), { persistent: true });
+            ch.publish(config.RABBIT_MQ_SUCCESS_QUEUE, config.FLOW_ID, new Buffer(msg), { persistent: true });
             resolve(ch);
         }
         catch (err) {

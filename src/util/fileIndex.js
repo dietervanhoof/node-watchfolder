@@ -111,6 +111,8 @@ FileIndex.prototype.retry_failed_packages = function() {
         if (this.packages[key].isComplete && this.packages[key].failed) {
             log.warn('Package ' + key + ' failed. Trying to publish message again.');
             this.sendCompleteMessage(key)
+                .bind(this)
+                .then(() => this.movePackage(key, this.config.PROCESSING_FOLDER_NAME))
                 .then( () => { return this.deleteEntry(key) })
                 .catch(error => {
                     this.packages[key].failed = true;
