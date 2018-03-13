@@ -1,7 +1,7 @@
 # NodeJS watchfolder
 Watches directories for packages and publishes messages when complete.
 
-A package consists of 2 or 3 files, depending on the configuration. This service will monitor a folder for files and match these based on their name and extension.
+A package can consist of as many files as you want, depending on the configuration. This service will monitor a folder for files and match these based on their name and extension.
 
 ####Example:
 A complete package might be:
@@ -9,6 +9,8 @@ A complete package might be:
   - somefile.mxf
 - Configured with only essence and sidecar
   - somefile.mxf
+  - somefile.xml
+- Configured with only sidecar
   - somefile.xml
 - Configured with essence, sidecar and collateral
   - somefile.mxf
@@ -24,6 +26,7 @@ node src/watchfolder.js \
 	--ESSENCE_FILE_TYPE=.mxf,.txt \
 	--SIDECAR_FILE_TYPE=.xml \
 	--COLLATERAL_FILE_TYPE=.srt \
+	--IGNORE_FILE_TYPE= \
 	--RABBIT_MQ_HOST=localhost \
 	--RABBIT_MQ_PORT=5672 \
 	--RABBIT_MQ_VHOST=/ \
@@ -47,7 +50,7 @@ node src/watchfolder.js \
 
 ```
 
-####Arguments
+#### Arguments
 Argument                        |Description                                                            |Required       |Default
 |:---                           |:---                                                                   |:---           |:---
 | CP                            |Can be filled in freely. Will be part of the message                   | True          | None|
@@ -55,6 +58,8 @@ Argument                        |Description                                    
 | ESSENCE_FILE_TYPE             |File types that are recognized as essence, separated with a `,`        | True          | None|
 | SIDECAR_FILE_TYPE             |File types that are recognized as sidecar, separated with a `,`        | False         | None|
 | COLLATERAL_FILE_TYPE          |File types that are recognized as collateral, separated with a `,`     | False         | None|
+| IGNORE_FILE_TYPE              |File types to ignore (.part for example)                               | False         | None|
+| NR_OF_COLLATERALS             |Number of collateral files (required when COLLATERAL_FILE_TYPE)        | False	        | None|
 | RABBIT_MQ_HOST                |AMQP host to connect to                                                | True          | None|
 | RABBIT_MQ_PORT                |AMQP port to connect to                                                | True          | None|
 | RABBIT_MQ_VHOST               |AMQP virtual host to connect to                                        | True          | None|
@@ -75,3 +80,22 @@ Argument                        |Description                                    
 | INCOMPLETE_FOLDER_NAME        |Folder to move incomplete packages to                                  | True          | None|
 | REFUSED_FOLDER_NAME           |Folder to move refused files to                                        | True          | None|
 | FOLDER_TO_WATCH               |Folder to watch for files                                              | True          | None|
+
+
+## Docker stuff:
+```
+    docker build -t watcher:latest .
+    sudo docker tag watcher docker-registry-default.apps.do-qas-ori-01.do.viaa.be/test/watcher:latest
+    sudo docker push docker-registry-default.apps.do-qas-ori-01.do.viaa.be/test/watcher
+```
+
+## build the docker file and push to openshift docker repo
+ADD TO PROJECT from image in web console
+## set the ENV in origin DeploymentConfig (dc) :
+oc set env dc/watcher FTP_USERNAME=moo
+
+oc set env dc/watcher FTP_SERVER=larry.ftp
+
+etc ...
+-- add and edit the watcher templatefile to your need and add to origin e.g. oc create -f watcher  , add to origin project
+## TODO : Storage documentation NFS

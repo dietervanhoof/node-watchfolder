@@ -23,6 +23,12 @@ const required_arguments = [
     "REFUSED_FOLDER_NAME",
     "FOLDER_TO_WATCH"
 ];
+const fileTypeArguments = [
+    "ESSENCE_FILE_TYPE",
+    "SIDECAR_FILE_TYPE",
+    "COLLATERAL_FILE_TYPE",
+    "IGNORE_FILE_TYPE"
+];
 
 const parseArguments = () => {
     const argv = require('minimist')(process.argv.slice(2));
@@ -38,7 +44,24 @@ const parseArguments = () => {
         argv.RABBIT_MQ_HOST,
         argv.RABBIT_MQ_PORT,
         argv.RABBIT_MQ_VHOST);
-    argv.ESSENCE_FILE_TYPE = argv.ESSENCE_FILE_TYPE.split(',');
+
+    fileTypeArguments.forEach((ft) => {
+        if (argv[ft] && argv[ft] !== undefined && argv[ft] !== true) {
+            argv[ft] = argv[ft].toString().replace(/ /g, '').split(',');
+        }
+        else {
+            argv[ft] = undefined;
+        }
+    });
+    /*
+    // Check if essence type exists
+    if (argv.ESSENCE_FILE_TYPE && argv.ESSENCE_FILE_TYPE.length != undefined) {
+        argv.ESSENCE_FILE_TYPE = argv.ESSENCE_FILE_TYPE.split(',');
+    }
+    else {
+        argv.ESSENCE_FILE_TYPE = undefined;
+    }
+    //argv.ESSENCE_FILE_TYPE = argv.ESSENCE_FILE_TYPE.split(',');
 
     // Check if sidecar type exists
     if (argv.SIDECAR_FILE_TYPE && argv.SIDECAR_FILE_TYPE.length != undefined) {
@@ -54,6 +77,10 @@ const parseArguments = () => {
     else {
         argv.COLLATERAL_FILE_TYPE = undefined;
     }
+    */
+
+
+
     if (!argv.RETRY_PACKAGE_INTERVAL) {
         argv.RETRY_PACKAGE_INTERVAL = 15000
     }

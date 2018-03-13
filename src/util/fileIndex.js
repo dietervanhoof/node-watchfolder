@@ -15,15 +15,14 @@ function FileIndex (config, filerecognizer, publisher, generator) {
 
 FileIndex.prototype.determine_file_type = function(filepath) {
     const filename = path.basename(filepath);
-    if (this.file_recognizer.is_essence(filename)) {
+    if (this.config['ESSENCE_FILE_TYPE'] && this.file_recognizer.is_essence(filename)) {
         return "essence";
     } else if (this.config['SIDECAR_FILE_TYPE'] && this.file_recognizer.is_sidecar(filename)){
         return "sidecar";
-    }
-    if (this.config['COLLATERAL_FILE_TYPE']) {
-        if (this.file_recognizer.is_collateral(filename)) {
-            return "collateral";
-        }
+    } else if (this.config['IGNORE_FILE_TYPE'] && this.file_recognizer.is_ignored(filename)) {
+        return "ignore";
+    } else if (this.config['COLLATERAL_FILE_TYPE'] && this.file_recognizer.is_collateral(filename)) {
+        return "collateral";
     }
     return "other";
 };
@@ -33,7 +32,9 @@ FileIndex.prototype.add_file = function (filepath, file_type) {
         const filename = path.basename(filepath);
         const currentTime = new Date();
         const currentTimeMillis = currentTime.getTime();
-        if (file_type !== 'other') {
+        if (file_type === 'ignore') {
+            log.info('Ignored file: ' + filename);
+        } else if (file_type !== 'other') {
             const lookupKey = filename.replace(/\.[^/.]+$/, "");
             if (this.packages[lookupKey]) {
                 log.info('Accepted file for existing package: ' + filename);
@@ -76,23 +77,28 @@ FileIndex.prototype.is_package_complete = function(key) {
     let has_essence = false;
     let has_sidecar = false;
     let has_collateral = false;
+    let nr_of_collaterals = 0;
 
     this.packages[key].files.forEach((file) => {
-        if (file.file_type == 'essence') has_essence = true;
-        if (file.file_type == 'sidecar') has_sidecar = true;
-        if (file.file_type == 'collateral') has_collateral = true;
+        if (file.file_type === 'essence') has_essence = true;
+        if (file.file_type === 'sidecar') has_sidecar = true;
+        if (file.file_type === 'collateral') {
+            has_collateral = true;
+            nr_of_collaterals++;
+        }
     });
 
-    if (this.config['COLLATERAL_FILE_TYPE']) {
-        return has_essence && has_sidecar && has_collateral;
-    } else {
-        if (this.config['SIDECAR_FILE_TYPE']) {
-            return has_essence && has_sidecar;
-        }
-        else {
-            return has_essence;
-        }
+    let complete = true;
+    if (this.config['ESSENCE_FILE_TYPE']) {
+        complete &= has_essence;
     }
+    if (this.config['COLLATERAL_FILE_TYPE']) {
+        complete &= has_collateral && nr_of_collaterals === this.config['NR_OF_COLLATERALS'];
+    }
+    if (this.config['SIDECAR_FILE_TYPE']) {
+        complete &= has_sidecar;
+    }
+    return complete;
 };
 
 FileIndex.prototype.check_expired_packages = function() {

@@ -1,5 +1,7 @@
 const mv = require("mv");
 const path = require("path");
+const mkdirp = require('mkdirp');
+const fs = require("fs");
 
 const getFileName = (file_path) => {
     return path.basename(file_path);
@@ -18,7 +20,28 @@ const appendFolder = (file_path, folder) => {
 };
 
 const moveFile = (sourcePath, destinationPath, cb) => {
-    mv(sourcePath, destinationPath, {mkdirp: true}, cb);
+    mv(sourcePath, destinationPath, {mkdirp: false}, cb);
+};
+
+const getPermissions = (path) => {
+    return fs.statSync(path);
+};
+
+const createDirectory = (path, uid, gid, mode) => {
+    var oldmask = process.umask(0);
+    if(!fs.existsSync(path)){
+        console.log('Creating ', path, 'with uid:gid ', uid, ':', gid);
+        fs.mkdirSync(path, mode, function(err){
+            process.umask(oldmask);
+            if(err){
+                console.log(err);
+                // echo the result back
+                response.send("ERROR! Can't make the directory! \n");
+            }
+        });
+        console.log('Chowning ', path, ' to ' + uid + ':' + gid);
+        fs.chownSync(path, uid, gid);
+    }
 };
 
 module.exports = {
@@ -26,5 +49,7 @@ module.exports = {
     appendFolder: appendFolder,
     createFullPath: createFullPath,
     getFileName: getFileName,
-    getFolder: getFolder
+    getFolder: getFolder,
+    createDirectory: createDirectory,
+    getPermissions: getPermissions
 };
