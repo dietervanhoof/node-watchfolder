@@ -1,4 +1,4 @@
-image: node:carbon
+image: node:8
 
 before_script:
   - npm install
@@ -10,5 +10,13 @@ test:lint:
   script:
     - npm run lint
 test:node:8:
+  script:
+    - npm test
+test:node:6:
+  image: node:6
+  script:
+    - npm test
+test:node:7:
+  image: node:7
   script:
     - npm test
