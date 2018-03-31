@@ -1,11 +1,8 @@
 const chalk = require('chalk');
-const util = require("util");
 require( "console-stamp" )( console, { pattern : "dd/mm/yyyy HH:MM:ss.l" } );
 
 const debug = (message) => {
-    if (env === 'development') {
-        console.log(message);
-    }
+    console.log(message);
 };
 
 const error = (message) => {

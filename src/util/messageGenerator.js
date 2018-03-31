@@ -1,4 +1,3 @@
-const log = require("../services/logger.service");
 const fileutils = require("./fileUtils");
 
 function MessageGenerator(config) {

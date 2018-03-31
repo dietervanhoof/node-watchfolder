@@ -1,7 +1,7 @@
 const Promise = require("bluebird");
 const log = require("../services/logger.service");
 const Buffer = require("buffer").Buffer;
-const amqp = Promise.promisifyAll(require('amqplib'));
+const amqp = Promise.promisifyAll(require("amqplib"));
 
 function Publisher(config) {
     this.config = config;
@@ -9,8 +9,8 @@ function Publisher(config) {
 }
 
 Publisher.prototype.publishMessage = function(msg, id) {
-    let conn =  amqp.connect(this.config.broker);
-    return conn.then((conn) => {
+    let connection = amqp.connect(this.config.broker);
+    return connection.then((conn) => {
         this.createChannel(conn)
             .bind(this)
             .then((ch) => {
@@ -89,7 +89,7 @@ Publisher.prototype.bindQueue = (ch, config) => {
 Publisher.prototype.transmitMessage = (ch, msg, id, config) => {
     return new Promise((resolve, reject) => {
         try {
-            log.success('Successfully published message for package ' + id);
+            log.success("Successfully published message for package " + id);
             ch.publish(config.RABBIT_MQ_SUCCESS_EXCHANGE, config.FLOW_ID, new Buffer(msg), { persistent: true });
             resolve(ch);
         }

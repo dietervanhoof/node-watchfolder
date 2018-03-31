@@ -29,6 +29,6 @@ function match_types (extension, file_types) {
             return false;
         }
     });
-};
+}
 
 module.exports = FileRecognizer;

@@ -17,7 +17,6 @@
   "author": "VIAA",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "0.24.1",
     "mocha": "^3.2.0"
   },
   "dependencies": {

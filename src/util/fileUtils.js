@@ -1,6 +1,5 @@
 const mv = require("mv");
 const path = require("path");
-const mkdirp = require('mkdirp');
 const fs = require("fs");
 
 const getFileName = (file_path) => {
@@ -35,8 +34,6 @@ const createDirectory = (path, uid, gid, mode) => {
             process.umask(oldmask);
             if(err){
                 console.log(err);
-                // echo the result back
-                response.send("ERROR! Can't make the directory! \n");
             }
         });
         console.log('Chowning ', path, ' to ' + uid + ':' + gid);
