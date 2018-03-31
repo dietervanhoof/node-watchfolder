@@ -2,7 +2,6 @@ image: node:8
 
 before_script:
   - npm install
-  - npm install -g codecov
 
 cache:
   paths:
@@ -12,7 +11,8 @@ test:lint:
     - npm run lint
 test:node:8:
   script:
-    - npm test $codecov_token
+    - npm install -g codecov
+    - npm test && codecov -t $codecov_token
 test:node:6:
   image: node:6
   script:
