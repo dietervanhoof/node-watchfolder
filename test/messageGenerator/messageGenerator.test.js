@@ -1,4 +1,4 @@
-const Generator = require("./../src/util/messageGenerator");
+const Generator = require("./../../src/util/messageGenerator");
 const assert = require('assert');
 
 describe('messageGenerator', () => {

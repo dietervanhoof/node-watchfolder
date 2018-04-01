@@ -1,5 +1,5 @@
 const assert = require('assert');
-const cmdargs = require('./../src/util/cmdargs');
+const cmdargs = require('./../../src/util/cmdargs');
 
 describe('cmdargs', () => {
     let argv = [

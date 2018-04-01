@@ -1,9 +1,11 @@
 # NodeJS watchfolder
+[![codecov](https://codecov.io/gh/dietervanhoof/node-watchfolder/branch/master/graph/badge.svg)](https://codecov.io/gh/dietervanhoof/node-watchfolder)
+
 Watches directories for packages and publishes messages when complete.
 
 A package can consist of as many files as you want, depending on the configuration. This service will monitor a folder for files and match these based on their name and extension.
 
-####Example:
+#### Example:
 A complete package might be:
 - Configured with only essence
   - somefile.mxf

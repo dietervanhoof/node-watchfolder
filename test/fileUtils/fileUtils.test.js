@@ -1,4 +1,4 @@
-const fileUtils = require("./../src/util/fileUtils");
+const fileUtils = require("./../../src/util/fileUtils");
 const assert = require('assert');
 const sinon = require('sinon');
 const fs = require('fs');

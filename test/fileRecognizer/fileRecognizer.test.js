@@ -1,4 +1,4 @@
-const FileRecognizer = require("./../src/util/fileRecognizer");
+const FileRecognizer = require("./../../src/util/fileRecognizer");
 const assert = require('assert');
 
 
