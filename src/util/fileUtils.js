@@ -30,7 +30,6 @@ const createDirectory = (path, uid, gid, mode) => {
     var oldmask = process.umask(0);
     if(!fs.existsSync(path)){
         fs.mkdirSync(path, mode, function(err){
-            console.log('Got here');
             process.umask(oldmask);
             if(err){
                 throw err;
