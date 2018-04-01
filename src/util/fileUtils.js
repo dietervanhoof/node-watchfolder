@@ -29,14 +29,13 @@ const getPermissions = (path) => {
 const createDirectory = (path, uid, gid, mode) => {
     var oldmask = process.umask(0);
     if(!fs.existsSync(path)){
-        console.log('Creating ', path, 'with uid:gid ', uid, ':', gid);
         fs.mkdirSync(path, mode, function(err){
+            console.log('Got here');
             process.umask(oldmask);
             if(err){
-                console.log(err);
+                throw err;
             }
         });
-        console.log('Chowning ', path, ' to ' + uid + ':' + gid);
         fs.chownSync(path, uid, gid);
     }
 };
