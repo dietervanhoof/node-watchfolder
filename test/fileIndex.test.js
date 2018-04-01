@@ -29,7 +29,8 @@ describe('fileIndex', () => {
             COLLATERAL_FILE_TYPE: ['.srt'],
             NR_OF_COLLATERALS: 1,
             CHECK_PACKAGE_INTERVAL: 100,
-            CHECK_PACKAGE_AMOUNT: 1,
+            CHECK_PACKAGE_AMOUNT: 5,
+            RETRY_PACKAGE_INTERVAL: 200,
             PROCESSING_FOLDER_NAME: 'processing',
             INCOMPLETE_FOLDER_NAME: 'incomplete',
             REFUSED_FOLDER_NAME: 'refused',
@@ -37,7 +38,8 @@ describe('fileIndex', () => {
         };
         fileRecognizer = new FileRecognizer(options)
     })
-    describe('Create a complete package', () => {
+    describe('create a complete package', () => {
+        const packagekey = 'thisfile';
         before(() => {
             publisher = {
                 publishMessage: sinon.spy()
@@ -55,9 +57,9 @@ describe('fileIndex', () => {
             fileIndex = new FileIndex(options, fileRecognizer, publisher, generator, logger, fileutils);
         });
         describe('adding an essence file', () => {
-            it('should return \'thisfile.mxf\'', () => {
-                return fileIndex.add_file('/fake/path/thisfile.mxf', 'essence').then((data) => {
-                    assert.equal('thisfile.mxf', data.files.filter((file) => file.file_type === 'essence')[0].file_name)
+            it('should return \'' + packagekey + '.mxf\'', () => {
+                return fileIndex.add_file('/fake/path/' + packagekey + '.mxf', 'essence').then((data) => {
+                    assert.equal(packagekey + '.mxf', data.files.filter((file) => file.file_type === 'essence')[0].file_name)
                 });
             });
             it('should not call \'generate\' on the generator', () => {
@@ -70,13 +72,13 @@ describe('fileIndex', () => {
                 assert.equal(1, Object.keys(fileIndex.packages).length);
             });
             it('should have 1 file in the package', () => {
-                assert.equal(1, fileIndex.packages['thisfile'].files.length);
+                assert.equal(1, fileIndex.packages[packagekey].files.length);
             });
         });
         describe('adding a sidecar file', () => {
-            it('should return \'thisfile.xml\'', () => {
-                return fileIndex.add_file('/fake/path/thisfile.xml', 'sidecar').then((data) => {
-                    assert.equal('thisfile.xml', data.files.filter((file) => file.file_type === 'sidecar')[0].file_name)
+            it('should return \'' + packagekey + '.xml\'', () => {
+                return fileIndex.add_file('/fake/path/' + packagekey + '.xml', 'sidecar').then((data) => {
+                    assert.equal(packagekey + '.xml', data.files.filter((file) => file.file_type === 'sidecar')[0].file_name)
                 });
             });
             it('should not call \'generate\' on the generator', () => {
@@ -89,15 +91,33 @@ describe('fileIndex', () => {
                 assert.equal(1, Object.keys(fileIndex.packages).length);
             });
             it('should have 2 files in the package', () => {
-                assert.equal(2, fileIndex.packages['thisfile'].files.length);
+                assert.equal(2, fileIndex.packages[packagekey].files.length);
+            });
+        });
+        describe('adding a non related file', () => {
+            it('should return not have added any files', () => {
+                return fileIndex.add_file('/fake/path/incomplete.mp4.part', 'ignore').then(() => {
+                    assert.equal(2, fileIndex.packages[packagekey].files.length);
+                });
+            });
+            it('should not call \'generate\' on the generator', () => {
+                assert(generator.generate.notCalled);
+            });
+            it('should not call \'publishMessage\' on the publisher', () => {
+                assert(publisher.publishMessage.notCalled);
+            });
+            it('should have 1 entry in the package list', () => {
+                assert.equal(1, Object.keys(fileIndex.packages).length);
             });
         });
         describe('adding a collateral file', () => {
-            it('should return \'thisfile.srt\'', () => {
-                return fileIndex.add_file('/fake/path/thisfile.srt', 'collateral').then((data) => {
-                    assert.equal('thisfile.srt', data.files.filter((file) => file.file_type === 'collateral')[0].file_name)
+            it('should return \'' + packagekey + '.srt\'', () => {
+                return fileIndex.add_file('/fake/path/' + packagekey + '.srt', 'collateral').then((data) => {
+                    assert.equal(packagekey + '.srt', data.files.filter((file) => file.file_type === 'collateral')[0].file_name)
                 });
             });
+        });
+        describe('completing a package', () => {
             it('should call \'generate\' on the generator', () => {
                 assert(generator.generate.called);
             });
@@ -105,11 +125,75 @@ describe('fileIndex', () => {
                 assert(publisher.publishMessage.called);
             });
             it('should call \'move\' on the files', () => {
-                assert(fileutils.moveFile.called);
+                assert.equal(3, fileutils.moveFile.callCount);
             });
             it('should remove the entry from the package list', () => {
                 assert.equal(0, Object.keys(fileIndex.packages).length);
             });
+        });
+    });
+    describe('when encountering connection issues', () => {
+        const packagekey = 'thisfile';
+        before(() => {
+            publisher = {
+                publishMessage: sinon.stub()
+                    .onCall(0).rejects('Connection error')
+                    .onCall(1).rejects('Connection error')
+                    .onCall(2).rejects('Connection error')
+                    .onCall(3).resolves('OK')
+            };
+            fileutils = {
+                moveFile: sinon.spy(),
+                createFullPath: FileUtils.createFullPath,
+                appendFolder: FileUtils.appendFolder,
+                getFileName: FileUtils.getFileName,
+                getFolder: FileUtils.getFolder
+            };
+            generator = {
+                generate: sinon.spy()
+            };
+            fileIndex = new FileIndex(options, fileRecognizer, publisher, generator, logger, fileutils);
+            fileIndex.sendCompleteMessage = sinon.spy(fileIndex.sendCompleteMessage);
+            return Promise.all([
+                fileIndex.add_file('/fake/path/' + packagekey + '.mxf', 'essence'),
+                fileIndex.add_file('/fake/path/' + packagekey + '.xml', 'sidecar'),
+                fileIndex.add_file('/fake/path/' + packagekey + '.srt', 'collateral')
+            ]);
+        });
+        describe('when retrying', () => {
+            it('the package should contain 3 files', () => {
+                assert.equal(3, fileIndex.packages[packagekey].files.length);
+            });
+            it('the package should be marked as complete', () => {
+                assert.equal(true, fileIndex.packages[packagekey].isComplete);
+            });
+            it('the package should be marked as failed', () => {
+                assert.equal(true, fileIndex.packages[packagekey].failed);
+                assert.equal(1, fileIndex.sendCompleteMessage.callCount);
+            });
+            it('message sending should be retried', () => {
+                fileIndex.retry_failed_packages();
+                assert.equal(2, fileIndex.sendCompleteMessage.callCount);
+                fileIndex.retry_failed_packages();
+                assert.equal(3, fileIndex.sendCompleteMessage.callCount);
+            });
+            describe('once the connection issue is gone', () => {
+                before(() => {
+                    fileIndex.retry_failed_packages();
+                });
+                it('should call \'generate\' on the generator', () => {
+                    assert(generator.generate.called);
+                });
+                it('should call \'publishMessage\' on the publisher', () => {
+                    assert(publisher.publishMessage.called);
+                });
+                it('should call \'move\' on the files', () => {
+                    assert.equal(3, fileutils.moveFile.callCount);
+                });
+                it('should remove the entry from the package list', () => {
+                    assert.equal(0, Object.keys(fileIndex.packages).length);
+                });
+            })
         });
     });
     describe('create an incomplete package', () => {
@@ -128,6 +212,7 @@ describe('fileIndex', () => {
             generator = {
                 generate: sinon.spy()
             };
+            options.CHECK_PACKAGE_AMOUNT = 1;
             fileIndex = new FileIndex(options, fileRecognizer, publisher, generator, logger, fileutils);
             clock = sinon.useFakeTimers();
         });
@@ -146,7 +231,7 @@ describe('fileIndex', () => {
             it('should not call \'publishMessage\' on the publisher', () => {
                 assert(publisher.publishMessage.notCalled);
             });
-            it('should not hace discarded the package after 99ms', () => {
+            it('should not have discarded the package after 99ms', () => {
                 clock.tick(99);
                 fileIndex.check_expired_packages();
                 assert(fileutils.moveFile.notCalled);
@@ -209,6 +294,11 @@ describe('fileIndex', () => {
         describe('for an .xml file', () => {
             it('should return \'sidecar\'', () => {
                 assert.equal("sidecar", fileIndex.determine_file_type('/path/to/file.xml'));
+            })
+        });
+        describe('for an .srt file', () => {
+            it('should return \'collateral\'', () => {
+                assert.equal("collateral", fileIndex.determine_file_type('/path/to/file.srt'));
             })
         });
         describe('for a .part file', () => {
