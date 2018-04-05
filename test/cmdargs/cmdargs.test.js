@@ -40,13 +40,13 @@ describe('cmdargs', () => {
         });
         describe('should set derived argument', () => {
             it('broker correctly', () => {
-                process.argv = argv;
+                process.argv = JSON.parse(JSON.stringify(argv));
                 process.argv.push('--ESSENCE_FILE_TYPE=.mxf,.mp4');
                 const options = cmdargs.parseArguments();
                 assert.equal('amqp://username:password@hostname:5672//', options.broker);
             });
             it('folder correctly', () => {
-                process.argv = argv;
+                process.argv = JSON.parse(JSON.stringify(argv));
                 process.argv.push('--ESSENCE_FILE_TYPE=.mxf,.mp4');
                 const options = cmdargs.parseArguments();
                 assert.equal('/watch/this/folder', options.folder);
@@ -54,16 +54,20 @@ describe('cmdargs', () => {
         });
         describe('should parse', () => {
             it('file types separated by spaces correctly', () => {
-                process.argv = argv;
+                process.argv = JSON.parse(JSON.stringify(argv));
                 process.argv.push('--ESSENCE_FILE_TYPE=.mxf, .mp4');
                 const options = cmdargs.parseArguments();
                 assert.notEqual(-1, options.ESSENCE_FILE_TYPE.indexOf('.mxf'));
+                assert.notEqual(-1, options.ESSENCE_FILE_TYPE.indexOf('.mp4'));
+                assert.equal(2, options.ESSENCE_FILE_TYPE.length);
             });
             it('file types separated without spaces correctly', () => {
-                process.argv = argv;
+                process.argv = JSON.parse(JSON.stringify(argv));
                 process.argv.push('--ESSENCE_FILE_TYPE=.mxf,.mp4');
                 const options = cmdargs.parseArguments();
+                assert.notEqual(-1, options.ESSENCE_FILE_TYPE.indexOf('.mxf'));
                 assert.notEqual(-1, options.ESSENCE_FILE_TYPE.indexOf('.mp4'));
+                assert.equal(2, options.ESSENCE_FILE_TYPE.length);
             });
         });
     })
