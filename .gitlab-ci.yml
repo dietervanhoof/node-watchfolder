@@ -1,4 +1,4 @@
-image: node:8
+image: node:10
 
 before_script:
   - npm install
@@ -9,10 +9,14 @@ cache:
 test:lint:
   script:
     - npm run lint
-test:node:8:
+test:node:10:
   script:
     - npm install -g codecov
-    - npm test && codecov -t $codecov_token
+    - npm test && codecov -t $codedov_token
+test:node:8:
+  image: node:8
+  script:
+    - npm test
 test:node:6:
   image: node:6
   script:
